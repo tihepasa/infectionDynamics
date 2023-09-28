@@ -1,4 +1,4 @@
-// Simultaneous modelling of three response diseases.
+// Simultaneous modeling of three response diseases.
 
 functions {
   // Function for computing Q of QR decomposition
@@ -106,24 +106,28 @@ parameters {
   vector[N] c_s_raw;
 }
 transformed parameters {
+  // set sum-to-zero constraints for seasonal effects
   vector[12] seasonal_p = sum_to_zero(seasonal_p_raw, Q12, 12);
   vector[12] seasonal_m = sum_to_zero(seasonal_m_raw, Q12, 12);
   vector[12] seasonal_s = sum_to_zero(seasonal_s_raw, Q12, 12);
+  // fix means of lambda to 1
   vector[N] lambda_p = 1 + sigma_lambda_p * sum_to_zero(lambda_p_raw, QN, N);
   vector[N] lambda_m = 1 + sigma_lambda_m * sum_to_zero(lambda_m_raw, QN, N);
   vector[N] lambda_s = 1 + sigma_lambda_s * sum_to_zero(lambda_s_raw, QN, N);
 
-  vector[N] a_p = sigma_a_p * a_p_raw;
+  // transformations of a, b and c
+  vector[N] a_p = sigma_a_p * a_p_raw; // implies a_p ~ normal(0, sigma_a_p)
   vector[N] a_m = sigma_a_m * a_m_raw;
   vector[N] a_s = sigma_a_s * a_s_raw;
-  vector[N] b_p = 1 + sigma_b_p * b_p_raw;
+  vector[N] b_p = 1 + sigma_b_p * b_p_raw; // implies b_p ~ normal(1, sigma_b_p)
   vector[N] b_s = 1 + sigma_b_s * b_s_raw;
   vector[N] b_m = 1 + sigma_b_m * b_m_raw;
-  vector[N] c_p = 1 + sigma_c_p * c_p_raw;
+  vector[N] c_p = 1 + sigma_c_p * c_p_raw; // implies c_p ~ normal(1, sigma_c_p)
   vector[N] c_s = 1 + sigma_c_s * c_s_raw;
   vector[N] c_m = 1 + sigma_c_m * c_m_raw;
 }
 model {
+  // set the priors
   seasonal_p_raw ~ normal(0, scale12);
   seasonal_m_raw ~ normal(0, scale12);
   seasonal_s_raw ~ normal(0, scale12);
@@ -168,7 +172,8 @@ model {
   c_p_raw ~ std_normal();
   c_m_raw ~ std_normal();
   c_s_raw ~ std_normal();
-
+  
+  // combine all the parts to form the complete model
   {
     vector[N * (T - 1)] logit_prob;
     for (t in 1:(T - 1)) {
@@ -197,5 +202,6 @@ model {
   }
 }
 generated quantities {
+  // generate the correlation matrix of taus
   matrix[3, 3] corr_tau = multiply_lower_tri_self_transpose(L);
 }
