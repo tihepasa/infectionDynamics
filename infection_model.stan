@@ -67,6 +67,7 @@ parameters {
   real<lower=0> sigma_lambda_s;
 
   // Raw parameters for seasonal effects with sum-to-zero constraint
+  // In case of omitting the seasonal term, comment out these three rows
   vector[11] seasonal_p_raw;
   vector[11] seasonal_m_raw;
   vector[11] seasonal_s_raw;
@@ -107,9 +108,11 @@ parameters {
 }
 transformed parameters {
   // set sum-to-zero constraints for seasonal effects
+  // in case of omitting the seasonal term, comment out these three rows
   vector[12] seasonal_p = sum_to_zero(seasonal_p_raw, Q12, 12);
   vector[12] seasonal_m = sum_to_zero(seasonal_m_raw, Q12, 12);
   vector[12] seasonal_s = sum_to_zero(seasonal_s_raw, Q12, 12);
+  
   // fix means of lambda to 1
   vector[N] lambda_p = 1 + sigma_lambda_p * sum_to_zero(lambda_p_raw, QN, N);
   vector[N] lambda_m = 1 + sigma_lambda_m * sum_to_zero(lambda_m_raw, QN, N);
@@ -130,6 +133,7 @@ model {
   // set the priors (mostly noninformative)
   
   // seasonal terms and lambdas need specific deviations due to the sum-to-zero constraints
+  // In case of omitting the seasonal term, comment out the rows with seasonal_...
   seasonal_p_raw ~ normal(0, scale12);
   seasonal_m_raw ~ normal(0, scale12);
   seasonal_s_raw ~ normal(0, scale12);
@@ -178,6 +182,7 @@ model {
   c_s_raw ~ std_normal();
   
   // combine all the parts to form the complete model
+  // In case of omitting the seasonal term, remove seasonal variables
   {
     vector[N * (T - 1)] logit_prob;
     for (t in 1:(T - 1)) {
