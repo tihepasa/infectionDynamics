@@ -1,4 +1,4 @@
-// Simultaneous modeling of three response diseases.
+// Simultaneous modeling of three dependent response diseases.
 
 functions {
   // Function for computing Q of QR decomposition
@@ -29,7 +29,7 @@ data {
   array[T - 1, N] int<lower=0, upper=1> pertussis;
   array[T - 1, N] int<lower=0, upper=1> measles;
   array[T - 1, N] int<lower=0, upper=1> smallpox;
-
+  
   // Variables below are here same for all responses
   // In general we could have different predictors and missing data patters
   int<lower=0> K_x; // number of predictors based on site's own characteristics
@@ -40,6 +40,10 @@ data {
   array[n_obs] int<lower=0> ind; // indices of non-missing observations
 }
 transformed data {
+  // array form of responses
+  array[N * (T - 1)] int a_measles = to_array_1d(measles);
+  array[N * (T - 1)] int a_pertussis = to_array_1d(pertussis);
+  array[N * (T - 1)] int a_smallpox = to_array_1d(smallpox);
   // Scale parameter for the sum constrained prior
   real scaleN = inv(sqrt(1 - inv(N)));
   real scale12 = inv(sqrt(1 - inv(12)));
@@ -60,29 +64,29 @@ parameters {
   vector[K_z] gamma_p;
   vector[K_z] gamma_m;
   vector[K_z] gamma_s;
-
+  
   // Standard deviations of factor loadings lambda
   real<lower=0> sigma_lambda_p;
   real<lower=0> sigma_lambda_m;
   real<lower=0> sigma_lambda_s;
-
+  
   // Raw parameters for seasonal effects with sum-to-zero constraint
   vector[11] seasonal_p_raw;
   vector[11] seasonal_m_raw;
   vector[11] seasonal_s_raw;
-
+  
   // Raw parameters for factor loadings lambda
   vector[N - 1] lambda_p_raw;
   vector[N - 1] lambda_m_raw;
   vector[N - 1] lambda_s_raw;
-
+  
   // Latent factors tau for each three responses (p, m, s)
   array[T - 1] vector[3] tau;
   // Standard deviations of the latent factor noise terms
   vector<lower=0>[3] sigma_tau;
   // Cholesky factor of the correlation matrix of latent factors
   cholesky_factor_corr[3] L;
-
+  
   // standard deviations of site-specific intercepts and coefficients
   real<lower=0> sigma_a_p;
   real<lower=0> sigma_a_m;
@@ -93,7 +97,7 @@ parameters {
   real<lower=0> sigma_c_p;
   real<lower=0> sigma_c_m;
   real<lower=0> sigma_c_s;
-
+  
   // raw site-specific intercepts and coefficients
   vector[N] a_p_raw;
   vector[N] a_m_raw;
@@ -114,7 +118,7 @@ transformed parameters {
   vector[N] lambda_p = 1 + sigma_lambda_p * sum_to_zero(lambda_p_raw, QN, N);
   vector[N] lambda_m = 1 + sigma_lambda_m * sum_to_zero(lambda_m_raw, QN, N);
   vector[N] lambda_s = 1 + sigma_lambda_s * sum_to_zero(lambda_s_raw, QN, N);
-
+  
   // transformations of a, b and c
   vector[N] a_p = sigma_a_p * a_p_raw; // implies a_p ~ normal(0, sigma_a_p)
   vector[N] a_m = sigma_a_m * a_m_raw;
@@ -125,48 +129,83 @@ transformed parameters {
   vector[N] c_p = 1 + sigma_c_p * c_p_raw; // implies c_p ~ normal(1, sigma_c_p)
   vector[N] c_s = 1 + sigma_c_s * c_s_raw;
   vector[N] c_m = 1 + sigma_c_m * c_m_raw;
+  
+  // compute pointwise (region & time, jointly all diseases) log-likelihood here
+  // to avoid duplicate computations for loo in generated quantities
+  // here vectorization doesn't help anyway due to distinct p for each bernoulli
+  vector[n_obs] log_lik;
+  {
+    vector[N * (T - 1)] logit_prob;
+    for (t in 1:(T - 1)) {
+      logit_prob[((t - 1) * N + 1) : (t * N)] =
+      a_p + seasonal_p[month[t]] + lambda_p * tau[t, 1] +
+      rows_dot_product(b_p, x[t] * beta_p) +
+      rows_dot_product(c_p, z[t] * gamma_p);
+    }
+    for(i in 1:n_obs) {
+      log_lik[i] = bernoulli_logit_lpmf(a_pertussis[ind[i]] | logit_prob[ind[i]]);
+    }
+    
+    for (t in 1:(T - 1)) {
+      logit_prob[((t - 1) * N + 1) : (t * N)] =
+      a_m + seasonal_m[month[t]] + lambda_m * tau[t, 2] +
+      rows_dot_product(b_m, x[t] * beta_m) +
+      rows_dot_product(c_m, z[t] * gamma_m);
+    }
+    for(i in 1:n_obs) {
+      // add to loglik
+      log_lik[i] += bernoulli_logit_lpmf(a_measles[ind[i]] | logit_prob[ind[i]]);
+    }
+    
+    for (t in 1:(T - 1)) {
+      logit_prob[((t - 1) * N + 1) : (t * N)] =
+      a_s + seasonal_s[month[t]] + lambda_s * tau[t, 3] +
+      rows_dot_product(b_s, x[t] * beta_s) +
+      rows_dot_product(c_s, z[t] * gamma_s);
+    }
+    for(i in 1:n_obs) {
+      // add to loglik
+      log_lik[i] += bernoulli_logit_lpmf(a_smallpox[ind[i]] | logit_prob[ind[i]]);
+    }
+  }
 }
 model {
-  // set the priors (mostly noninformative)
-  
-  // seasonal terms and lambdas need specific deviations due to the sum-to-zero constraints
+  // set the priors
   seasonal_p_raw ~ normal(0, scale12);
   seasonal_m_raw ~ normal(0, scale12);
   seasonal_s_raw ~ normal(0, scale12);
   lambda_p_raw ~ normal(0, scaleN);
   lambda_m_raw ~ normal(0, scaleN);
   lambda_s_raw ~ normal(0, scaleN);
-
+  
   beta_p ~ normal(0, 2);
   beta_m ~ normal(0, 2);
   beta_s ~ normal(0, 2);
   gamma_p ~ normal(0, 2);
   gamma_m ~ normal(0, 2);
   gamma_s ~ normal(0, 2);
-
+  
   sigma_lambda_p ~ gamma(2, 1);
   sigma_lambda_m ~ gamma(2, 1);
   sigma_lambda_s ~ gamma(2, 1);
   
-  // intercorrelated random walk for tau
   sigma_tau ~ gamma(2, 1);
   L ~ lkj_corr_cholesky(1);
   tau[1] ~ normal(-2, 2);
   tau[2:(T-1)] ~ multi_normal_cholesky(tau[1:(T - 2)], diag_pre_multiply(sigma_tau, L));
-
+  
   sigma_a_p ~ gamma(2, 1);
   sigma_a_m ~ gamma(2, 1);
   sigma_a_s ~ gamma(2, 1);
-
+  
   sigma_b_p ~ gamma(2, 1);
   sigma_b_m ~ gamma(2, 1);
   sigma_b_s ~ gamma(2, 1);
-
+  
   sigma_c_p ~ gamma(2, 1);
   sigma_c_m ~ gamma(2, 1);
   sigma_c_s ~ gamma(2, 1);
-
-  // give standard normal priors here for the transformations
+  
   a_p_raw ~ std_normal();
   a_m_raw ~ std_normal();
   a_s_raw ~ std_normal();
@@ -177,33 +216,7 @@ model {
   c_m_raw ~ std_normal();
   c_s_raw ~ std_normal();
   
-  // combine all the parts to form the complete model
-  {
-    vector[N * (T - 1)] logit_prob;
-    for (t in 1:(T - 1)) {
-      logit_prob[((t - 1) * N + 1) : (t * N)] =
-         a_p + seasonal_p[month[t]] + lambda_p * tau[t, 1] +
-         rows_dot_product(b_p, x[t] * beta_p) +
-         rows_dot_product(c_p, z[t] * gamma_p);
-    }
-    to_array_1d(pertussis)[ind] ~ bernoulli_logit(logit_prob[ind]);
-
-    for (t in 1:(T - 1)) {
-      logit_prob[((t - 1) * N + 1) : (t * N)] =
-        a_m + seasonal_m[month[t]] + lambda_m * tau[t, 2] +
-        rows_dot_product(b_m, x[t] * beta_m) +
-        rows_dot_product(c_m, z[t] * gamma_m);
-    }
-    to_array_1d(measles)[ind] ~ bernoulli_logit(logit_prob[ind]);
-
-    for (t in 1:(T - 1)) {
-      logit_prob[((t - 1) * N + 1) : (t * N)] =
-        a_s + seasonal_s[month[t]] + lambda_s * tau[t, 3] +
-        rows_dot_product(b_s, x[t] * beta_s) +
-        rows_dot_product(c_s, z[t] * gamma_s);
-    }
-    to_array_1d(smallpox)[ind] ~ bernoulli_logit(logit_prob[ind]);
-  }
+  target += sum(log_lik);
 }
 generated quantities {
   // generate the correlation matrix of taus

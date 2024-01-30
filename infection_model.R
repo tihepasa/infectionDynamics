@@ -1,3 +1,5 @@
+# Fit the joint infection model without saving pointwise log-likelihoods
+
 library(cmdstanr)
 
 # read the data which includes:
@@ -78,3 +80,23 @@ fit <- model$sample(data = pars,
                     parallel_chains = 4,
                     refresh = 10,
                     save_warmup = FALSE)
+
+## some results
+
+# find dominant frequencies of the taus (= incidence factors) via spectral analysis
+library(forecast)
+
+# all the dates as a sequence
+dates <- seq.Date(from = as.Date("1820-01-01"), to = as.Date("1850-12-01"), by = "month")
+
+# extract taus from the fit
+tau <- rstan::extract(fit, "tau")[[1]]
+
+# take mean of the taus and form data frame of them and the dates (not necessary)
+taut <- data.frame(mean = c(apply(tau, 2:3, mean)),
+                   date = rep(dates[-1], 3))
+
+# find the frequencies
+forecast::findfrequency(taut$mean[1:(pars$T - 1)]) # pertussis
+forecast::findfrequency(taut$mean[pars$T:(2 * (pars$T - 1))]) # measles
+forecast::findfrequency(taut$mean[(2 * pars$T - 1):(3 * (pars$T - 1))]) # smallpox
