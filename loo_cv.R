@@ -1,4 +1,6 @@
 # Fit the joint and independent models and compare them with leave-one-out cross-validation
+# In case of memory issues, fit the models separately, save them, and do the cross-validation
+# afterwards for the saved model objects.
 
 library(cmdstanr)
 library(rstan)
