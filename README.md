@@ -13,45 +13,53 @@ This repository contains the following supplementary files:
 - `bern_dependent_pred.R`, `bern_independent_pred.R`, `negbin_dependent_pred.R`, `negbin_independent_pred.R`: R codes to estimate the predicted probabilities by the different models using stanfit objects gained from fitting the Stan models. The dependent versions include description in comments of how to repeat the predictions for models without seasonal component.
 - `loo_cv.R`: R codes to fit the Stan models, and to compare them with leave-one-out cross-validation.
 
-## Figures
+## Bernoulli model
+### Figures
 
 Figures 1 and 2 consider the Bernoulli model.
 
-### Figure 1
+#### Figure 1
 ![plot](./figures/figure1_b_bern.png)
 
-### Figure 2
+#### Figure 2
 ![plot](./figures/figure2_c_bern.png)
+
+### Tables
+
+Table 1 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the Bernoulli model.
+
+#### Table 1
+![plot](./figures/table1_bern.png)
+
+## Negative binomial model
+### Figures
 
 Figures 3-9 consider the negative binomial model, representing results corresponding the ones reported of the Bernoulli model in section _Results_ in the article. The negative binomial model is described in more detail in section _Model comparison_ in the article.
 
-### Figure 3
+#### Figure 3
 ![plot](./figures/figure3_site_negbin.png)
 
-### Figure 4
+#### Figure 4
 ![plot](./figures/figure4_time_negbin.png)
 
-### Figure 5
+#### Figure 5
 ![plot](./figures/figure5_tau_negbin.png)
 
-### Figure 6
+#### Figure 6
 ![plot](./figures/figure6_season_negbin.png)
 
-### Figure 7
+#### Figure 7
 ![plot](./figures/figure7_a_lambda_negbin.png)
 
-### Figure 8
+#### Figure 8
 ![plot](./figures/figure8_b_negbin.png)
 
-### Figure 9
+#### Figure 9
 ![plot](./figures/figure9_c_negbin.png)
 
-## Tables
+### Tables
 
-Table 1 represents results of all time and town invariant parameter estimates with their posterior and prior intervals of the Bernoulli model, whereas Table 2 shows those of the negative binomial model.
+Table 2 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the negative binomial model.
 
-### Table 1
-![plot](./figures/table1_bern.png)
-
-### Table 2
+#### Table 2
 ![plot](./figures/table2_negbin.png)
