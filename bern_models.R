@@ -1,15 +1,11 @@
-# Fit the dependent and independent models (Bernoulli and negative binomial,
-# complete data and the last two years) and compare them with leave-one-out cross-validation
-# In case of memory issues, fit the models and/or their generated quantities separately, save them,
-# and do the cross-validation afterwards for the saved objects.
-
+## Bernoulli models
 library(dplyr)
 library(cmdstanr)
 library(rstan)
 library(loo)
 
 set.seed(1)
-# read the data which includes:
+# # read the data which includes:
 # T, the number of months (time points)
 # N, the number of towns (regions)
 # n_pertussis, TxN matrix of the numbers of the observed deaths caused by pertussis
@@ -40,18 +36,9 @@ for (t in 1:par$T) {
   }
 }
 
-# The code from here to the line where the loos are calculated (till row 213)
-# has to be adapted and rerun according to the comments in order to gain the leave-one-out
-# cross-validations for each individual model. The current version applies for dependent
-# Bernoulli model.
-
-# collect the responses and predictors, and set ids for sites, and
+# collect the responses and predictors, and set ids for sites, and 
 # create time and month indices
-# for negative binomial models use pertussis, measles and smallpox on the rows now commented out
 d <- data.frame(
-  #pertussis = unlist(par$n_pertussis[, -1]),
-  #measles = unlist(par$n_measles[, -1]),
-  #smallpox = unlist(par$n_smallpox[, -1]),
   pertussis = unlist(par$is_pertussis[, -1]),
   measles = unlist(par$is_measles[, -1]),
   smallpox = unlist(par$is_smallpox[, -1]),
@@ -71,7 +58,7 @@ d <- data.frame(
 # the commented filtering part below and all the rest works as it is
 d <- d %>% 
   tidyr::drop_na() #%>%
-#filter(as.numeric(time) < (par$T - 24))
+  #filter(as.numeric(time) < (par$T - 24))
 
 # select variables needed for fitting the model
 # responses
@@ -113,15 +100,9 @@ tau_init <- log(
 # set initial values based on earlier MCMC runs for faster adaptation, can be altered
 # in case of omitting seasonal effect, comment out the rows with seasonal_
 # in case of independent diseases, comment out the row with L = ...
-# for negative binomial model include the five rows commented out in the beginning of the list
 inits <- replicate(
   4, 
   list(
-    #alpha_phi_p = -0.5, alpha_phi_m = -1.1, alpha_phi_s = -0.8,
-    #sigma_phi_p = 0.7, sigma_phi_m = 0.5, sigma_phi_s = 0.5,
-    #phi_p_raw = numeric(par$N),
-    #phi_m_raw = numeric(par$N),
-    #phi_s_raw = numeric(par$N),
     sigma_a_p = 0.7, sigma_a_m = 0.4, sigma_a_s = 0.3,
     sigma_b_p = 0.4, sigma_b_m = 0.3, sigma_b_s = 0.3,
     sigma_c_p = 0.6, sigma_c_m = 0.5, sigma_c_s = 0.4,
@@ -154,11 +135,8 @@ inits <- replicate(
 
 # create a CmdStanModel object from the Stan program
 model <- cmdstan_model("bern_dependent.stan", stanc_options = list("O1"))
-#model <- cmdstan_model("bern_independent.stan", stanc_options = list("O1"))
-#model <- cmdstan_model("bern_dependent_s.stan", stanc_options = list("O1"))
-#model <- cmdstan_model("negbin_dependent.stan", stanc_options = list("O1"))
-#model <- cmdstan_model("negbin_independent.stan", stanc_options = list("O1"))
-#model <- cmdstan_model("negbin_dependent_s.stan", stanc_options = list("O1"))
+model <- cmdstan_model("bern_independent.stan", stanc_options = list("O1"))
+model <- cmdstan_model("bern_dependent_s.stan", stanc_options = list("O1"))
 
 # fit the model, 4 chains with 2500 warm-up iterations and 5000 posterior samples
 fit <- model$sample(data = standata,
@@ -170,58 +148,33 @@ fit <- model$sample(data = standata,
                     refresh = 100,
                     save_warmup = FALSE)
 
+# save the model with a suitable name for future use as a CmdStan object or as a Stan object
+# the Stan fits are needed at least for the predictions in ..._pred.R files,
+# the CmdStan objects can be useful when calculating the leave-one-out cross-validations
+#fit$save_object(paste0("cmdstanfit_bern_dependent.rds"))
+#fit$save_object(paste0("cmdstanfit_bern_independent.rds"))
+#fit$save_object(paste0("cmdstanfit_bern_dependent_s.rds"))
+#out <- rstan::read_stan_csv(fit$output_files())
+#saveRDS(out, file = paste0("fit_bern_dependent.rds"))
+#saveRDS(out, file = paste0("fit_bern_independent.rds"))
+#saveRDS(out, file = paste0("fit_bern_dependent_s.rds"))
 
-## approximate leave-one-out cross-validation
+## some results
 
-# use separate generated quantities (to get the log likelihoods), use here a model that
-# contains the desired calculations in the generated quantities block of the Stan file
-# see also the comments on Stan files in the supplements
-model_gq <- cmdstan_model("bern_dependent.stan", stanc_options = list("O1"))
-#model_gq <- cmdstan_model("bern_independent.stan", stanc_options = list("O1"))
-#model_gq <- cmdstan_model("bern_dependent_s.stan", stanc_options = list("O1"))
-#model_gq <- cmdstan_model("negbin_dependent.stan", stanc_options = list("O1"))
-#model_gq <- cmdstan_model("negbin_independent.stan", stanc_options = list("O1"))
-#model_gq <- cmdstan_model("negbin_dependent_s.stan", stanc_options = list("O1"))
+# find dominant frequencies of the taus (= incidence factors) via spectral analysis
+library(forecast)
 
-# use the complete data also for the predictive models
-fit_gq <- model_gq$generate_quantities(fit, data = standata, parallel_chains = 4)
-draws <- fit_gq$draws()
+# all the dates as a sequence
+dates <- seq.Date(from = as.Date("1820-01-01"), to = as.Date("1850-12-01"), by = "month")
 
-# from the above draws it is convenient to estimate the ELPDs
-# relative effective sample sizes have to be added manually
-r_eff <- relative_eff(exp(draws))
+# extract taus from the fit
+tau <- rstan::extract(fit, "tau")[[1]]
 
-# make sure that above you have used the desired model and data and choose the
-# corresponding row below
-loo_bern_dep <- rstan::loo(draws, r_eff = r_eff, cores = 4)
-loo_bern_indep <- rstan::loo(draws, r_eff = r_eff, cores = 4)
-loo_bern_dep_s <- rstan::loo(draws, r_eff = r_eff, cores = 4)
+# take mean of the taus and form data frame of them and the dates (not necessary)
+taut <- data.frame(mean = c(apply(tau, 2:3, mean)),
+                   date = rep(dates[-1], 3))
 
-loo_negbin_dep <- rstan::loo(draws, r_eff = r_eff, cores = 4)
-loo_negbin_indep <- rstan::loo(draws, r_eff = r_eff, cores = 4)
-loo_negbin_dep_s <- rstan::loo(draws, r_eff = r_eff, cores = 4)
-
-# or in the case of the models omitting the last two years, select manually only the
-# log likelihood values considering the last two years, thus the indices
-r_eff <- relative_eff(exp(draws[, , 94344:101153]))
-loo_bern_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_bern_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_bern_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-
-loo_negbin_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_negbin_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_negbin_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-
-# results
-loo_bern_dep
-loo_bern_indep
-loo_bern_dep_s
-
-loo_negbin_dep
-loo_negbin_indep
-loo_negbin_dep_s
-
-# compare the models
-loo::loo_compare(loo_bern_dep, loo_bern_indep, loo_bern_dep_s,
-                 loo_negbin_dep, loo_negbin_indep, loo_negbin_dep_s)
-
+# find the frequencies
+forecast::findfrequency(taut$mean[1:(pars$T - 1)]) # pertussis
+forecast::findfrequency(taut$mean[pars$T:(2 * (pars$T - 1))]) # measles
+forecast::findfrequency(taut$mean[(2 * pars$T - 1):(3 * (pars$T - 1))]) # smallpox
