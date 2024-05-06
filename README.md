@@ -18,10 +18,10 @@ This repository contains the following supplementary files:
 Figures 1 and 2 consider the Bernoulli model.
 
 ### Figure 1
-![plot](./figures/figure1_b.png)
+![plot](./figures/figure1_b_bern.png)
 
 ### Figure 2
-![plot](./figures/figure2_c.png)
+![plot](./figures/figure2_c_bern.png)
 
 Figures 3-9 consider the negative binomial model, representing results corresponding the ones reported of the Bernoulli model in section _Results_ in the article. The negative binomial model is described in more detail in section _Model comparison_ in the article.
 
