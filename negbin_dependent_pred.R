@@ -243,6 +243,9 @@ pr_site_p <- apply(pr_temp_p, c(1, 2), mean) %>% colMeans()
 pr_site_m <- apply(pr_temp_m, c(1, 2), mean) %>% colMeans()
 pr_site_s <- apply(pr_temp_s, c(1, 2), mean) %>% colMeans()
 
-# save
-saveRDS(list(pr_time_p, pr_time_m, pr_time_s,
-             pr_site_p, pr_site_m, pr_site_s), "sims_dataa_bern_dependent_short.rds")
+# now the results can be saved or further used, the variables worth inspecting are
+# pr_time_ and pr_site_
+
+# for example, time series plot of average probability of pertussis
+ts.plot(pr_time_p[, 1])
+
