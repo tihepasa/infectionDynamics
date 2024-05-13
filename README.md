@@ -16,50 +16,50 @@ This repository contains the following supplementary files:
 ## Bernoulli model
 ### Figures
 
-Figures 1 and 2 consider the Bernoulli model.
+Supplementary Figures 1 and 2 consider the Bernoulli model.
 
-#### Figure 1
-![plot](./figures/figure1_b_bern.png)
+#### Supplementary Figure 1
+![plot](./figures/supplementary_fig1.png)
 
-#### Figure 2
-![plot](./figures/figure2_c_bern.png)
+#### Supplementary Figure 2
+![plot](./figures/supplementary_fig2.png)
 
 ### Tables
 
-Table 1 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the Bernoulli model.
+Supplementary Table 1 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the Bernoulli model.
 
-#### Table 1
-![plot](./figures/table1_bern.png)
+#### Supplementary Table 1
+![plot](./figures/supplementary_table1.png)
 
 ## Negative binomial model
 ### Figures
 
-Figures 3-9 consider the negative binomial model, representing results corresponding the ones reported of the Bernoulli model in section _Results_ in the article. The negative binomial model is described in more detail in section _Model comparison_ in the article.
+Supplementary Figures 3-9 consider the negative binomial model, representing results corresponding the ones reported of the Bernoulli model in section _Results_ in the article. The negative binomial model is described in more detail in section _Model comparison_ in the article.
 
-#### Figure 3
-![plot](./figures/figure3_site_negbin.png)
+#### Supplementary Figure 3
+![plot](./figures/supplementary_fig3.png)
 
-#### Figure 4
-![plot](./figures/figure4_time_negbin.png)
+#### Supplementary Figure 4
+![plot](./figures/supplementary_fig4.png)
 
-#### Figure 5
-![plot](./figures/figure5_tau_negbin.png)
+#### Supplementary Figure 5
+![plot](./figures/supplementary_fig5.png)
 
-#### Figure 6
-![plot](./figures/figure6_season_negbin.png)
+#### Supplementary Figure 6
+![plot](./figures/supplementary_fig6.png)
 
-#### Figure 7
-![plot](./figures/figure7_a_lambda_negbin.png)
+#### Supplementary Figure 7
+![plot](./figures/supplementary_fig7.png)
 
-#### Figure 8
-![plot](./figures/figure8_b_negbin.png)
+#### Supplementary Figure 8
+![plot](./figures/supplementary_fig8.png)
 
-#### Figure 9
-![plot](./figures/figure9_c_negbin.png)
+#### Supplementary Figure 9
+![plot](./figures/supplementary_fig9.png)
 
 ### Tables
 
-Table 2 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the negative binomial model.
+Supplementary Table 2 represents results of all time and town invariant parameter estimates with their posterior and prior intervals in the case of the negative binomial model.
 
-#### Table 2
-![plot](./figures/table2_negbin.png)
+#### Supplementary Table 2
+![plot](./figures/supplementary_table2.png)
