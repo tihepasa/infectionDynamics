@@ -18,9 +18,9 @@ This repository contains the following supplementary files:
 - `bern_model_week_lag4.R`: R codes to fit the weekly model with one-week to four-week lags without seasonal component.
 
 ## Updates
-An error was found from the codes in the file `loo_cv.R` considering the comparison of the models omitting the last two years of the data. The file has been updated to hold the correct codes and the erroneous lines are commented out. This does not affect out interpretations, even though the last two columns of Table 2 were originally incorrect. The updated Table 2 can be found below.
+An error was found from the codes in the file `loo_cv.R` considering the comparison of the models omitting the last two years of the data. The file has been updated to hold the correct codes and the erroneous lines are commented out. This does not affect our interpretations, even though the last two columns of Table 2 were originally incorrect. The updated Table 2 can be found below.
 
-#### Table 2
+#### Table 2 (updated in October 2024)
 ![plot](./figures/table2_corrected.png)
 
 ## Bernoulli model
