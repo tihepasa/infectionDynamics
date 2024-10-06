@@ -203,14 +203,27 @@ loo_negbin_dep_s <- rstan::loo(draws, r_eff = r_eff, cores = 4)
 
 # or in the case of the models omitting the last two years, select manually only the
 # log likelihood values considering the last two years, thus the indices
-r_eff <- relative_eff(exp(draws[, , 94344:101153]))
-loo_bern_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_bern_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_bern_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
 
-loo_negbin_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_negbin_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
-loo_negbin_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+### this part holds an error, the function to use should not be rstan::loo, but loo::elpd,
+### the old version is here on comments and the corrected one below without comments
+#r_eff <- relative_eff(exp(draws[, , 94344:101153]))
+#loo_bern_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+#loo_bern_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+#loo_bern_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+#
+#loo_negbin_dep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+#loo_negbin_indep <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+#loo_negbin_dep_s <- rstan::loo(draws[, , 94344:101153], r_eff = r_eff, cores = 4)
+
+# corrected code starts
+loo_bern_dep <- loo::elpd(draws[, , 94344:101153])
+loo_bern_indep <- loo::elpd(draws[, , 94344:101153])
+loo_bern_dep_s <- loo::elpd(draws[, , 94344:101153])
+
+loo_negbin_dep <- loo::elpd(draws[, , 94344:101153])
+loo_negbin_indep <- loo::elpd(draws[, , 94344:101153])
+loo_negbin_dep_s <- loo::elpd(draws[, , 94344:101153])
+# corrected code ends
 
 # results
 loo_bern_dep
