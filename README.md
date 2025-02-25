@@ -2,6 +2,8 @@
 
 Supplementary material for the paper *Spatio-temporal modeling of co-dynamics of smallpox, measles and pertussis in pre-healthcare Finland*.
 
+The paper itself is available at https://doi.org/10.7717/peerj.18155.
+
 ## Files
 
 This repository contains the following supplementary files:
